@@ -11,6 +11,7 @@
     "@testing-library/user-event": "^7.1.2",
     "express": "^4.17.1",
     "http": "^0.0.1-security",
+    "http-delayed-response": "^0.0.4",
     "pg": "^8.0.3",
     "pg-hstore": "^2.3.3",
     "probe-image-size": "^5.0.0",
