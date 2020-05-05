@@ -6,6 +6,7 @@ const sharp = require('sharp');
 const bodyParser = require('body-parser');
 const probe = require('probe-image-size');
 const randomize = require('randomatic');
+const DelayedResponse = require('http-delayed-response');
 const app = express();
 const webSocketServer = require('websocket').server;
 let webSocketsServerPort = process.env.PORT;
@@ -78,8 +79,10 @@ wsServer.on('request',  (request) => {
         console.log(`connected: ${userId} in ${gameCode}`);
         break;
       case 'highlight':
-        cardHighlightRes[gameCode].json({ [guid]: true });
-        delete cardHighlightRes[gameCode];
+        if(cardHighlightRes[gameCode] !== undefined) {
+          cardHighlightRes[gameCode]({[guid]: true});
+          delete cardHighlightRes[gameCode];
+        }
         break;
       default:
         break;
@@ -149,7 +152,9 @@ app.get('/highlights', (req, res) => {
     res.sendStatus(400);
     return;
   }
-  cardHighlightRes[gameCode] = res;
+  const delayed = new DelayedResponse(req, res);
+  delayed.json();
+  cardHighlightRes[gameCode] = delayed.start(10000);
 });
 
 // Handle creation of a new game
