@@ -11,11 +11,12 @@ body {
   cursor: pointer;
 }
 
-.highlight {
+.highlight .carousel__inner-slide {
   box-shadow: 0 0 15px rgb(0, 0, 0);
   padding: 3px 0px 3px 3px;
   margin: 5px 1px 3px 0px;
   border: 2px solid rgb(81, 203, 238);
+  box-sizing: border-box;
 }
 
 .carousel__dot--selected {

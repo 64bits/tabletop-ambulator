@@ -31,7 +31,8 @@ end
 
 function processServerHighlights (data)
     local function starts_with(str, start)
-       return str:sub(str:gsub("%s+", ""), #start) == start
+        local trim = str:gsub("%s+", "")
+        return trim:sub(1, #start) == start
     end
     if data.is_error == false and starts_with(data.text, "{") then
         local highlights = JSON.decode(data.text)

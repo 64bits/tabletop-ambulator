@@ -162,6 +162,9 @@ app.get('/highlights', (req, res) => {
     res.write(JSON.stringify(err));
     res.end();
   });
+  delayed.on('abort', function (err) {
+    res.end();
+  });
   cardHighlightRes[gameCode] = delayed.start(10000);
 });
 
