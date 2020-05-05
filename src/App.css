@@ -1,0 +1,23 @@
+body {
+  background-color: #fcfcfc;
+  text-align: center;
+}
+
+.row {
+  height: 100px;
+}
+
+.card {
+  cursor: pointer;
+}
+
+.highlight {
+  box-shadow: 0 0 15px rgb(0, 0, 0);
+  padding: 3px 0px 3px 3px;
+  margin: 5px 1px 3px 0px;
+  border: 2px solid rgb(81, 203, 238);
+}
+
+.carousel__dot--selected {
+  background-color: #82b7df;
+}
