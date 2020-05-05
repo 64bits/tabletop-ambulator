@@ -108,9 +108,12 @@ app.get('/card', (req, res) => {
   const left = (offset % sheetWidth) * CARD_WIDTH;
   const top = Math.floor(offset / sheetWidth) * CARD_HEIGHT;
 
-  const protocol = imageUrl.startsWith('https') ? https : http;
+  // Hack - upgrade imgur http to https for imgur
+  // TODO: Get the http protocol working
+  let remoteImageUrl = imageUrl.replace(/^http:\/\/i.imgur.com/, 'https://i.imgur.com');
+  const protocol = remoteImageUrl.startsWith('https') ? https : http;
 
-  protocol.get(imageUrl, function(response) {
+  protocol.get(remoteImageUrl, function(response) {
     const transformer = sharp()
       .resize({
         width: ~~(CARD_WIDTH * sheetWidth / thumbFactor),
