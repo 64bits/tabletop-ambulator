@@ -99,11 +99,12 @@ app.get('/', (req, res) => {
 
 // Handle serving processed card images
 app.get('/card', (req, res) => {
-  const imageUrl = req.query.url;
-  const offset = req.query.offset;
-  const sheetWidth = req.query.width;
-  const sheetHeight = req.query.height;
-  const thumbFactor = req.query.thumb ? 5 : 1;
+  const { url: imageUrl, offset, width: sheetWidth, height: sheetHeight, thumb } = req.query;
+  if(!imageUrl || !offset || !sheetWidth || !sheetHeight) {
+    res.sendStatus(400);
+    return;
+  }
+  const thumbFactor = thumb ? 5 : 1;
   const left = (offset % sheetWidth) * CARD_WIDTH;
   const top = Math.floor(offset / sheetWidth) * CARD_HEIGHT;
 
@@ -122,7 +123,10 @@ app.get('/card', (req, res) => {
         height: ~~(CARD_HEIGHT / thumbFactor)
       });
 
-    response.pipe(transformer).pipe(res);
+    response
+      .pipe(transformer)
+      .on('error', () => res.redirect('https://i.imgur.com/WwuvEPd.jpg'))
+      .pipe(res);
   });
 });
 
@@ -138,7 +142,10 @@ app.post('/hands', async (req, res) => {
 // Handle long poll from the game client
 app.get('/highlights', (req, res) => {
   const { code: gameCode } = req.query;
-  if (!gameCode) res.sendStatus(400);
+  if (!gameCode) {
+    res.sendStatus(400);
+    return;
+  }
   cardHighlightRes[gameCode] = res;
 });
 
