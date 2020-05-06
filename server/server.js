@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const path = require('path');
@@ -197,6 +198,26 @@ app.get('/create', async (req, res) => {
   } while((await Game.findByPk(gameCode)));
   await Game.create({ gameCode });
   return res.json({ code: gameCode });
+});
+
+// Serve the object JSON that is used to construct the ambulator
+app.get('/ambulator', async (req, res) => {
+  fs.readFile(path.join(__dirname, '../build/ambulator.json'), 'utf8', function(err, contents) {
+    if (err) {
+      res.sendStatus(500);
+      return;
+    }
+    const json = JSON.parse(contents);
+    fs.readFile(path.join(__dirname, '../build/ambulator.lua'), 'utf8', function(err, contents) {
+      if (err) {
+        res.sendStatus(500);
+        return;
+      }
+      const prefix = req.headers.host.startsWith('localhost') ? 'http' : 'https';
+      json.LuaScript = contents.replace('$HOSTNAME', `${prefix}://${req.headers.host}`);
+      res.json(json);
+    });
+  });
 });
 
 // Start the server

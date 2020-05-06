@@ -1,0 +1,35 @@
+{
+  "Name": "Figurine_Sir_Loin",
+  "Transform": {
+    "posX": -2.74114973E-06,
+    "posY": 1.22603619,
+    "posZ": 1.51549466E-06,
+    "rotX": 3.78862183E-06,
+    "rotY": -5.684964E-05,
+    "rotZ": 2.31097351E-06,
+    "scaleX": 1.0,
+    "scaleY": 1.0,
+    "scaleZ": 1.0
+  },
+  "Nickname": "Tabletop Ambulator",
+  "Description": "",
+  "GMNotes": "",
+  "ColorDiffuse": {
+    "r": 1.0,
+    "g": 1.0,
+    "b": 1.0
+  },
+  "Locked": false,
+  "Grid": true,
+  "Snap": true,
+  "IgnoreFoW": false,
+  "Autoraise": true,
+  "Sticky": true,
+  "Tooltip": true,
+  "GridProjection": false,
+  "HideWhenFaceDown": false,
+  "Hands": false,
+  "XmlUI": "",
+  "LuaScriptState": "",
+  "GUID": "f31a19"
+}
