@@ -29,6 +29,7 @@ function App({ width }) {
     || 5;
   const [highlights, setHighlights] = useState({});
   const [cardData, setCardData] = useState({});
+  const [colorData, setColorData] = useState([]);
   const [gameCode, setGameCode] = useState(null);
   const [playerColor, setPlayerColor] = useState(null);
 
@@ -38,6 +39,15 @@ function App({ width }) {
       gameCode: code,
     }));
     setGameCode(code);
+  };
+
+  const selectColor = (color) => {
+    client.send(JSON.stringify({
+      type: "color",
+      color,
+      gameCode,
+    }));
+    setPlayerColor(color);
   };
 
   const highlightTemporarily = (guid) => {
@@ -73,9 +83,18 @@ function App({ width }) {
     client.onopen = () => {
       console.log('WebSocket Client Connected');
     };
-    client.onmessage = (message) => {
-      const data = JSON.parse(message.data);
-      setCardData(data);
+    client.onmessage = ({ data }) => {
+      const { type, payload } = JSON.parse(data);
+      switch (type) {
+        case 'cards':
+          setCardData(payload);
+          break;
+        case 'colors':
+          setColorData(payload);
+          break;
+        default:
+          break;
+      }
     };
   }, []);
 
@@ -98,6 +117,30 @@ function App({ width }) {
 
   const gameContent = () => (
     <>
+    {!playerColor && (
+      <>
+        <Box my={5}>
+          <Typography>
+            Choose Player Color
+          </Typography>
+        </Box>
+        <Select
+          style={{ minWidth: 150 }}
+          value={playerColor}
+          onChange={(e) => selectColor(e.target.value)}
+        >
+          {Object.keys(cardData).map(color => (
+            <MenuItem
+              value={color}
+              disabled={colorData.indexOf(color) >= 0}
+            >
+              <Brightness1Icon style={{ color }} />
+              <Box pl={1}>{color}</Box>
+            </MenuItem>
+          ))}
+        </Select>
+      </>
+    )}
     {cardData[playerColor] && (
       <Box my={3}>
         <Typography>
@@ -164,32 +207,11 @@ function App({ width }) {
         </CarouselProvider>
       </div>
     )}
-    {!playerColor && (
-      <>
-        <Box my={5}>
-          <Typography>
-            Choose Player Color
-          </Typography>
-        </Box>
-        <Select
-          style={{ minWidth: 150 }}
-          value={playerColor}
-          onChange={(e) => setPlayerColor(e.target.value)}
-        >
-        {Object.keys(cardData).map(color => (
-          <MenuItem value={color}>
-            <Brightness1Icon style={{ color }} />
-            <Box pl={1}>{color}</Box>
-          </MenuItem>
-        ))}
-        </Select>
-      </>
-    )}
     {playerColor && (
       <Button
         variant="contained"
         color="primary"
-        onClick={() => setPlayerColor(null)}
+        onClick={() => selectColor(null)}
         style={{
           marginTop: '20px'
         }}

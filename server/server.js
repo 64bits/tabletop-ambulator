@@ -56,30 +56,50 @@ const updateClientCards = async (gameCode, givenCards) => {
     await activeGame.save();
   }
   if (!users) return;
-  users.forEach(userId => {
+  Object.keys(users).forEach(userId => {
     if(userConnections[userId] === undefined) return;
-    userConnections[userId].sendUTF(JSON.stringify(givenCards || cards || {}));
+    userConnections[userId].sendUTF(JSON.stringify({ type: 'cards', payload: givenCards || cards || {} }));
+  });
+};
+
+// Update all players of a given game with colors
+const updateClientColors = async (gameCode) => {
+  const activeGame = await Game.findByPk(gameCode);
+  const { users } = activeGame;
+  if (!users) return;
+  const payload = Object.values(users).filter(c => c != null) || [];
+  Object.keys(users).forEach(userId => {
+    if(userConnections[userId] === undefined) return;
+    userConnections[userId].sendUTF(JSON.stringify({ type: 'colors', payload }));
   });
 };
 
 // Set up websocket handling
 wsServer.on('request',  (request) => {
+  let currentGame;
   const userId = getUniqueID();
   const connection = request.accept(null, request.origin);
   console.log(`${new Date()} Received a new connection from origin ${request.origin}.`);
 
   connection.on('message', async (message) => {
     if (message.type !== 'utf8') return;
-    const { type, gameCode, guid } = JSON.parse(message.utf8Data);
+    const { type, color, gameCode, guid } = JSON.parse(message.utf8Data);
     const activeGame = gameCode ? await Game.findByPk(gameCode) : null;
     if (!activeGame) return;
     switch (type) {
       case 'join':
+        currentGame = gameCode;
         userConnections[userId] = connection;
-        activeGame.users = activeGame.users ? [ ...activeGame.users, userId ] : [ userId ];
+        activeGame.users = { ...activeGame.users, [userId]: null };
         await activeGame.save();
         await updateClientCards(gameCode);
+        await updateClientColors(gameCode);
         console.log(`connected: ${userId} in ${gameCode}`);
+        break;
+      case 'color':
+        activeGame.users = { ...activeGame.users, [userId]: color };
+        await activeGame.save();
+        await updateClientColors(gameCode);
         break;
       case 'highlight':
         if(cardHighlightRes[gameCode] !== undefined) {
@@ -101,6 +121,12 @@ wsServer.on('request',  (request) => {
   connection.on('close', async (connection) => {
     console.log(`${new Date()} Peer ${userId} disconnected.`);
     delete userConnections[userId];
+    if (currentGame) {
+      const activeGame = await Game.findByPk(currentGame);
+      activeGame.users = { ...activeGame.users, [userId]: null };
+      await activeGame.save();
+      await updateClientColors(currentGame);
+    }
   });
 });
 
