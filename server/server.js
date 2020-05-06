@@ -7,6 +7,8 @@ const bodyParser = require('body-parser');
 const probe = require('probe-image-size');
 const randomize = require('randomatic');
 const DelayedResponse = require('http-delayed-response');
+const ImageDimensionsStream = require('image-dimensions-stream');
+const { PassThrough } = require('stream');
 const app = express();
 const webSocketServer = require('websocket').server;
 let webSocketsServerPort = process.env.PORT;
@@ -108,8 +110,6 @@ app.get('/card', (req, res) => {
     return;
   }
   const thumbFactor = thumb ? 5 : 1;
-  const left = (offset % sheetWidth) * CARD_WIDTH;
-  const top = Math.floor(offset / sheetWidth) * CARD_HEIGHT;
 
   // Hack - upgrade imgur http to https for imgur
   // TODO: Get the http protocol working
@@ -117,22 +117,33 @@ app.get('/card', (req, res) => {
   const protocol = remoteImageUrl.startsWith('https') ? https : http;
 
   protocol.get(remoteImageUrl, function(response) {
-    const transformer = sharp()
-      .resize({
-        width: ~~(CARD_WIDTH * sheetWidth / thumbFactor),
-        height: ~~(CARD_HEIGHT * sheetHeight / thumbFactor),
-      })
-      .extract({
-        left: ~~(left / thumbFactor),
-        top: ~~(top / thumbFactor),
-        width: ~~(CARD_WIDTH / thumbFactor),
-        height: ~~(CARD_HEIGHT / thumbFactor)
-      });
+    const bufferStream = new PassThrough().pause();
+    const sizeStream = new ImageDimensionsStream();
+    let stream = response
+      .pipe(sizeStream)
+      .pipe(bufferStream);
 
-    response
-      .pipe(transformer)
-      .on('error', () => res.redirect('https://i.imgur.com/WwuvEPd.jpg'))
-      .pipe(res);
+    sizeStream.on('dimensions', ({ width, height }) => {
+      // Calculate card size based on the sheet info and image dims
+      const cardWidth = ~~(width / sheetWidth);
+      const cardHeight = ~~(height / sheetHeight);
+      const left = (offset % sheetWidth) * cardWidth;
+      const top = Math.floor(offset / sheetWidth) * cardHeight;
+      const resizeCropStream = sharp()
+        .resize({
+          width: ~~(width / thumbFactor),
+          height: ~~(height / thumbFactor),
+        })
+        .extract({
+          left: ~~(left / thumbFactor),
+          top: ~~(top / thumbFactor),
+          width: ~~(cardWidth / thumbFactor),
+          height: ~~(cardHeight / thumbFactor)
+        });
+      stream = stream.pipe(resizeCropStream).pipe(res);
+      bufferStream.resume();
+      //res.send(stream);
+    });
   });
 });
 
