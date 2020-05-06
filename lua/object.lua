@@ -37,7 +37,18 @@ function processServerHighlights (data)
     if data.is_error == false and starts_with(data.text, "{") then
         local highlights = JSON.decode(data.text)
         for key, value in pairs(highlights) do
-            getObjectFromGUID(key).highlightOn({0, 0, 1}, 10)
+            -- let's try moving the object rather than highlighting
+            if value == 'play' then
+                local card = getObjectFromGUID(key)
+                local pos = card.getPosition()
+                pos.x = card.getTransformForward().x * 10 + math.random()
+                pos.z = card.getTransformForward().z * 10 + math.random()
+                card.setPosition(pos)
+                card.flip()
+                Wait.time(sendToServer, 0.5)
+            elseif value == 'highlight' then
+                getObjectFromGUID(key).highlightOn({0, 0, 1}, 10)
+            end
         end
     end
     getServerHighlights()

@@ -82,7 +82,13 @@ wsServer.on('request',  (request) => {
         break;
       case 'highlight':
         if(cardHighlightRes[gameCode] !== undefined) {
-          cardHighlightRes[gameCode]({[guid]: true});
+          cardHighlightRes[gameCode]({[guid]: 'highlight'});
+          delete cardHighlightRes[gameCode];
+        }
+        break;
+      case 'play':
+        if(cardHighlightRes[gameCode] !== undefined) {
+          cardHighlightRes[gameCode]({[guid]: 'play'});
           delete cardHighlightRes[gameCode];
         }
         break;

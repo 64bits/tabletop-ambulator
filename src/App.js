@@ -38,7 +38,7 @@ function App({ width }) {
       gameCode: code,
     }));
     setGameCode(code);
-  }
+  };
 
   const highlightTemporarily = (guid) => {
     const oldTimeout = highlights[guid] || null;
@@ -61,6 +61,14 @@ function App({ width }) {
     });
   };
 
+  const playCard = (guid) => {
+    client.send(JSON.stringify({
+      type: "play",
+      guid,
+      gameCode,
+    }));
+  };
+
   useEffect(() => {
     client.onopen = () => {
       console.log('WebSocket Client Connected');
@@ -74,7 +82,7 @@ function App({ width }) {
   const selectGame = () => (
     <>
       <Box my={3}>
-        <Paper elevation={1} style={{ display: 'flex', alignItems: 'center', width: '400px', margin: '0 auto' }}>
+        <Paper elevation={1} style={{ display: 'flex', alignItems: 'center', width: '300px', margin: '0 auto' }}>
           <InputBase defaultValue="" inputRef={gameCodeInputEl} style={{ marginLeft: '10px', flex: '1' }} placeholder="Enter Room Code (4 letter)" />
           <IconButton
             onClick={() => joinGame(gameCodeInputEl.current.value.toUpperCase())}
@@ -94,6 +102,9 @@ function App({ width }) {
       <Box my={3}>
         <Typography>
           {`There are ${cardData[playerColor].length} cards in your hand`}
+        </Typography>
+        <Typography>
+          Tap to highlight, tap again to play on table
         </Typography>
       </Box>
     )}
@@ -117,9 +128,15 @@ function App({ width }) {
                 key={card.guid}
                 index={index}
                 className={highlights[card.guid] ? 'highlight card' : 'card'}
+                onClick={(event) => {
+                  if (/highlight/.test(event.currentTarget.className)) {
+                    playCard(card.guid);
+                  } else {
+                    highlightTemporarily(card.guid);
+                  }
+                }}
               >
                 <Image
-                  onClick={() => highlightTemporarily(card.guid)}
                   src={
                   `/card?url=${encodeURI(card.face)}&offset=${card.offset}&width=${card.width}&height=${card.height}`
                   }
