@@ -1,7 +1,17 @@
 local target = 'https://tabletop-ambulator.herokuapp.com'
+local numTries = 0
+local waitSeconds = { 5, 10 }
 
-WebRequest.get(target .. '/ambulator', function (data)
-    if data.is_error == true then
+function tryGetScript()
+    WebRequest.get(target .. '/ambulator', handleResult)
+end
+
+function handleResult(data)
+    if data.is_error == true and numTries < 2 then
+        numTries = numTries + 1
+        print('Could not load ambulator...trying again in ' .. waitSeconds[numTries] .. ' seconds')
+        Wait.time(tryGetScript, waitSeconds[numTries])
+    elseif numTries >= 2 then
         print('Something went wrong - please try reloading ambulator')
     else
         spawnObjectJSON({
@@ -9,4 +19,6 @@ WebRequest.get(target .. '/ambulator', function (data)
         })
         destroyObject(self)
     end
-end)
+end
+
+tryGetScript()
