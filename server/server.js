@@ -116,35 +116,38 @@ app.get('/card', (req, res) => {
   let remoteImageUrl = imageUrl.replace(/^http:\/\/i.imgur.com/, 'https://i.imgur.com');
   const protocol = remoteImageUrl.startsWith('https') ? https : http;
 
-  protocol.get(remoteImageUrl, function(response) {
-    const bufferStream = new PassThrough().pause();
-    const sizeStream = new ImageDimensionsStream();
-    let stream = response
-      .pipe(sizeStream)
-      .pipe(bufferStream);
+  try {
+    protocol.get(remoteImageUrl, function (response) {
+      const bufferStream = new PassThrough().pause();
+      const sizeStream = new ImageDimensionsStream();
+      let stream = response
+        .pipe(sizeStream)
+        .pipe(bufferStream);
 
-    sizeStream.on('dimensions', ({ width, height }) => {
-      // Calculate card size based on the sheet info and image dims
-      const cardWidth = ~~(width / sheetWidth);
-      const cardHeight = ~~(height / sheetHeight);
-      const left = (offset % sheetWidth) * cardWidth;
-      const top = Math.floor(offset / sheetWidth) * cardHeight;
-      const resizeCropStream = sharp()
-        .resize({
-          width: ~~(width / thumbFactor),
-          height: ~~(height / thumbFactor),
-        })
-        .extract({
-          left: ~~(left / thumbFactor),
-          top: ~~(top / thumbFactor),
-          width: ~~(cardWidth / thumbFactor),
-          height: ~~(cardHeight / thumbFactor)
-        });
-      stream = stream.pipe(resizeCropStream).pipe(res);
-      bufferStream.resume();
-      //res.send(stream);
+      sizeStream.on('dimensions', ({width, height}) => {
+        // Calculate card size based on the sheet info and image dims
+        const cardWidth = ~~(width / sheetWidth);
+        const cardHeight = ~~(height / sheetHeight);
+        const left = (offset % sheetWidth) * cardWidth;
+        const top = Math.floor(offset / sheetWidth) * cardHeight;
+        const resizeCropStream = sharp()
+          .resize({
+            width: ~~(width / thumbFactor),
+            height: ~~(height / thumbFactor),
+          })
+          .extract({
+            left: ~~(left / thumbFactor),
+            top: ~~(top / thumbFactor),
+            width: ~~(cardWidth / thumbFactor),
+            height: ~~(cardHeight / thumbFactor)
+          });
+        stream = stream.pipe(resizeCropStream).pipe(res);
+        bufferStream.resume();
+      });
     });
-  });
+  } catch(e) {
+    res.redirect('https://i.imgur.com/WwuvEPd.jpg');
+  }
 });
 
 // Handle card information from game
