@@ -1,18 +1,13 @@
 const express = require('express');
 const fs = require('fs');
 const http = require('http');
-const https = require('https');
 const path = require('path');
-const sharp = require('sharp');
 const bodyParser = require('body-parser');
-const probe = require('probe-image-size');
 const randomize = require('randomatic');
 const DelayedResponse = require('http-delayed-response');
-const ImageDimensionsStream = require('image-dimensions-stream');
-const request = require('request');
-const { PassThrough } = require('stream');
 const app = express();
 const webSocketServer = require('websocket').server;
+const imageProcessor = require('./image-processor');
 let webSocketsServerPort = process.env.PORT;
 if (webSocketsServerPort == null || webSocketsServerPort == "") {
   webSocketsServerPort = 8000;
@@ -138,51 +133,7 @@ app.get('/', (req, res) => {
 
 // Handle serving processed card images
 app.get('/card', (req, res) => {
-  const { url: imageUrl, offset, width: sheetWidth, height: sheetHeight, thumb } = req.query;
-  if(!imageUrl || !offset || !sheetWidth || !sheetHeight) {
-    res.sendStatus(400);
-    return;
-  }
-  const thumbFactor = thumb ? 5 : 1;
-  const remoteImageUrl = unescape(imageUrl);
-  // const protocol = remoteImageUrl.startsWith('https') ? https : http;
-  var request = require('request').defaults({ encoding: null });
-  request.get(remoteImageUrl, function (err, response, body) {
-    const image = sharp(body);
-    image
-      .metadata()
-      .then(({ width, height, format }) => {
-        // Calculate card size based on the sheet info and image dims
-        const cardWidth = ~~(width / sheetWidth);
-        const cardHeight = ~~(height / sheetHeight);
-        const left = (offset % sheetWidth) * cardWidth;
-        const top = Math.floor(offset / sheetWidth) * cardHeight;
-        image
-          .resize({
-            width: ~~(width / thumbFactor),
-            height: ~~(height / thumbFactor),
-          })
-          .extract({
-            left: ~~(left / thumbFactor),
-            top: ~~(top / thumbFactor),
-            width: ~~(cardWidth / thumbFactor),
-            height: ~~(cardHeight / thumbFactor)
-          })
-          .toBuffer()
-          .then(data => {
-            res.type(format);
-            res.end(data);
-          })
-          .catch(err => {
-            console.log(err);
-            res.redirect('https://i.imgur.com/WwuvEPd.jpg');
-          });
-      })
-      .catch(err => {
-        console.log(err);
-        res.redirect('https://i.imgur.com/WwuvEPd.jpg');
-      });
-  });
+  imageProcessor(req, res);
 });
 
 // Handle card information from game
