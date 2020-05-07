@@ -22,9 +22,8 @@ const userConnections = {};
 // Initialize highlight promises (handled in-memory)
 const cardHighlightRes = {};
 
-// Default card width and height
-const CARD_WIDTH = 256;
-const CARD_HEIGHT = 358;
+// Initialize message queue
+const messages = {};
 
 // Spinning the http server and the websocket server.
 const server = http.createServer(app);
@@ -41,6 +40,16 @@ app.use(express.static(path.join(__dirname, '../build')));
 const getUniqueID = () => {
   const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
   return s4() + s4() + '-' + s4();
+};
+
+// Send a message to the game
+const sendMessageUpstream = async (gameCode, message) => {
+  if(cardHighlightRes[gameCode] !== undefined) {
+    cardHighlightRes[gameCode](message);
+    delete cardHighlightRes[gameCode];
+  } else {
+    messages[gameCode] = messages[gameCode] ? [ ...messages[gameCode], message ] : [ message ];
+  }
 };
 
 // Update all players of a given game with cards
@@ -98,16 +107,10 @@ wsServer.on('request',  (request) => {
         await updateClientColors(gameCode);
         break;
       case 'highlight':
-        if(cardHighlightRes[gameCode] !== undefined) {
-          cardHighlightRes[gameCode]({[guid]: 'highlight'});
-          delete cardHighlightRes[gameCode];
-        }
+        sendMessageUpstream(gameCode, {[guid]: 'highlight'});
         break;
       case 'play':
-        if(cardHighlightRes[gameCode] !== undefined) {
-          cardHighlightRes[gameCode]({[guid]: 'play'});
-          delete cardHighlightRes[gameCode];
-        }
+        sendMessageUpstream(gameCode, {[guid]: 'play'});
         break;
       default:
         break;
@@ -152,6 +155,12 @@ app.get('/highlights', (req, res) => {
     res.sendStatus(400);
     return;
   }
+  // Try sending a response immediately if a message exists
+  if (messages[gameCode] && messages[gameCode].length) {
+    res.json(messages[gameCode].shift());
+    return;
+  }
+  // Start the long poll
   const delayed = new DelayedResponse(req, res);
   delayed.json();
   delayed.on('done', function (data) {
