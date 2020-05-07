@@ -35,6 +35,21 @@ function sendToServer ()
     WebRequest.post(target .. '/hands?code=' .. gameCode, { payload = JSON.encode(fullData) })
 end
 
+function sendDecks ()
+    local decks = {}
+    for key, value in pairs(getAllObjects()) do
+        if value.name == 'DeckCustom' then
+            local deckInfo = value.getCustomObject()[1]
+            table.insert(decks, {
+                back = encodeURI(deckInfo.back),
+                unique = deckInfo.unique_back,
+                guid = value.guid
+            })
+        end
+    end
+    WebRequest.post(target .. '/decks?code=' .. gameCode, { payload = JSON.encode(decks) })
+end
+
 function getServerHighlights ()
     WebRequest.get(target .. '/highlights?code=' .. gameCode, processServerHighlights)
 end
@@ -48,16 +63,19 @@ function processServerHighlights (data)
         local highlights = JSON.decode(data.text)
         for key, value in pairs(highlights) do
             -- let's try moving the object rather than highlighting
-            if value == 'play' then
-                local card = getObjectFromGUID(key)
+            if key == 'play' then
+                local card = getObjectFromGUID(value)
                 local pos = card.getPosition()
                 pos.x = card.getTransformForward().x * 10 + math.random()
                 pos.z = card.getTransformForward().z * 10 + math.random()
                 card.setPosition(pos)
                 card.flip()
                 Wait.time(sendToServer, 0.5)
-            elseif value == 'highlight' then
-                getObjectFromGUID(key).highlightOn({0, 0, 1}, 10)
+            elseif key == 'highlight' then
+                getObjectFromGUID(value).highlightOn({0, 0, 1}, 10)
+            elseif key == 'draw' then
+                getObjectFromGUID(value.guid).deal(1, value.color)
+                Wait.time(sendToServer, 0.5)
             end
         end
     end
@@ -84,5 +102,6 @@ WebRequest.get(target .. '/create', function (data)
         print('Ambulated - go to ' .. target .. ' and enter code ' .. gameCode .. ' to join')
         getServerHighlights()
         sendToServer()
+        sendDecks()
     end
 end)

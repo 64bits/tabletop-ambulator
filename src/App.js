@@ -8,6 +8,7 @@ import {
   Button,
   IconButton,
   Select,
+  Menu,
   MenuItem,
   Typography,
   withWidth
@@ -27,9 +28,11 @@ function App({ width }) {
   const maxCards = (/xs/.test(width) && 1)
     || (/sm/.test(width) && 2)
     || 5;
+  const [anchorEl, setAnchorEl] = React.useState(null);
   const [highlights, setHighlights] = useState({});
   const [cardData, setCardData] = useState({});
   const [colorData, setColorData] = useState([]);
+  const [gameDecks, setGameDecks] = useState([]);
   const [gameCode, setGameCode] = useState(null);
   const [playerColor, setPlayerColor] = useState(null);
 
@@ -48,6 +51,15 @@ function App({ width }) {
       gameCode,
     }));
     setPlayerColor(color);
+  };
+
+  const drawCard = (guid) => {
+    client.send(JSON.stringify({
+      type: "draw",
+      color: playerColor,
+      guid,
+      gameCode,
+    }));
   };
 
   const highlightTemporarily = (guid) => {
@@ -86,6 +98,9 @@ function App({ width }) {
     client.onmessage = ({ data }) => {
       const { type, payload } = JSON.parse(data);
       switch (type) {
+        case 'decks':
+          setGameDecks(payload);
+          break;
         case 'cards':
           setCardData(payload);
           break;
@@ -97,6 +112,14 @@ function App({ width }) {
       }
     };
   }, []);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   const selectGame = () => (
     <>
@@ -188,6 +211,30 @@ function App({ width }) {
               </Slide>
             ))}
           </Slider>
+          {gameDecks.length < 0 && (
+            <Box m={2}>
+              <Button style={{ whiteSpace: 'nowrap' }} aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick}>
+                Draw Card
+              </Button>
+              <Menu
+                id="simple-menu"
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                {gameDecks.map(deck => (
+                  <MenuItem
+                    onClick={() => { drawCard(deck.guid); handleClose(); }}
+                    value={deck.guid}
+                  >
+                    <Box pr={1}>From</Box>
+                    <img src={unescape(deck.back)} width={45} height={60} />
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Box>
+          )}
           <div
             style={{
               textAlign: 'center'

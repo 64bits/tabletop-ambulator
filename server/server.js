@@ -22,6 +22,10 @@ const userConnections = {};
 // Initialize highlight promises (handled in-memory)
 const cardHighlightRes = {};
 
+// Store game decks
+// TODO: This should live in the DB?
+const gameDecks = {};
+
 // Initialize message queue
 const messages = {};
 
@@ -79,6 +83,17 @@ const updateClientColors = async (gameCode) => {
   });
 };
 
+// Update all players of a given game with decks
+const updateClientDecks = async (gameCode) => {
+  const activeGame = await Game.findByPk(gameCode);
+  const { users } = activeGame;
+  if (!users || !gameDecks[gameCode]) return;
+  Object.keys(users).forEach(userId => {
+    if(userConnections[userId] === undefined) return;
+    userConnections[userId].sendUTF(JSON.stringify({ type: 'decks', payload: gameDecks[gameCode] }));
+  });
+};
+
 // Set up websocket handling
 wsServer.on('request',  (request) => {
   let currentGame;
@@ -99,6 +114,7 @@ wsServer.on('request',  (request) => {
         await activeGame.save();
         await updateClientCards(gameCode);
         await updateClientColors(gameCode);
+        await updateClientDecks(gameCode);
         console.log(`connected: ${userId} in ${gameCode}`);
         break;
       case 'color':
@@ -107,10 +123,13 @@ wsServer.on('request',  (request) => {
         await updateClientColors(gameCode);
         break;
       case 'highlight':
-        sendMessageUpstream(gameCode, {[guid]: 'highlight'});
+        sendMessageUpstream(gameCode, {highlight: guid});
         break;
       case 'play':
-        sendMessageUpstream(gameCode, {[guid]: 'play'});
+        sendMessageUpstream(gameCode, {play: guid});
+        break;
+      case 'draw':
+        sendMessageUpstream(gameCode, {draw: { color, guid }});
         break;
       default:
         break;
@@ -145,6 +164,15 @@ app.post('/hands', async (req, res) => {
   const { payload } = req.body;
   if(!gameCode || !payload) res.sendStatus(400);
   await updateClientCards(gameCode, JSON.parse(payload));
+  res.sendStatus(200);
+});
+
+// Handle deck information from game
+app.post('/decks', async (req, res) => {
+  const { code: gameCode } = req.query;
+  const { payload } = req.body;
+  if(!gameCode || !payload) res.sendStatus(400);
+  gameDecks[gameCode] = JSON.parse(payload);
   res.sendStatus(200);
 });
 
