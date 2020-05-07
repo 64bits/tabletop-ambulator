@@ -155,6 +155,7 @@ app.get('/card', (req, res) => {
       const sizeStream = new ImageDimensionsStream();
       let stream = response
         .pipe(sizeStream)
+        .on('error', () => res.redirect('https://i.imgur.com/WwuvEPd.jpg'))
         .pipe(bufferStream);
 
       sizeStream.on('dimensions', ({width, height}) => {
@@ -174,7 +175,9 @@ app.get('/card', (req, res) => {
             width: ~~(cardWidth / thumbFactor),
             height: ~~(cardHeight / thumbFactor)
           });
-        stream = stream.pipe(resizeCropStream).pipe(res);
+        stream = stream.pipe(resizeCropStream)
+          .on('error', () => res.redirect('https://i.imgur.com/WwuvEPd.jpg'))
+          .pipe(res);
         bufferStream.resume();
       });
     });
