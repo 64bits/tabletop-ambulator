@@ -1,6 +1,16 @@
 local gameCode = ''
 local target = '$HOSTNAME'
 
+function encodeURI(str)
+    if (str) then
+        str = string.gsub (str, "\n", "\r\n")
+        str = string.gsub (str, "([^%w ])",
+        function (c) return string.format ("%%%02X", string.byte(c)) end)
+        str = string.gsub (str, " ", "+")
+    end
+    return str
+end
+
 function sendToServer ()
     --[[ Build and post JSON regarding users' hands --]]
     local fullData = {}
@@ -12,8 +22,8 @@ function sendToServer ()
                 local parsed = JSON.decode(cardValue.getJSON())
                 local custom = cardValue.getCustomObject()
                 table.insert(fullData[value], {
-                    face = custom.face,
-                    back = custom.back,
+                    face = encodeURI(custom.face),
+                    back = encodeURI(custom.back),
                     width = custom.width,
                     height = custom.height,
                     guid = parsed.GUID,

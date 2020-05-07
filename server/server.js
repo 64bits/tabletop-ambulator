@@ -9,6 +9,7 @@ const probe = require('probe-image-size');
 const randomize = require('randomatic');
 const DelayedResponse = require('http-delayed-response');
 const ImageDimensionsStream = require('image-dimensions-stream');
+const request = require('request');
 const { PassThrough } = require('stream');
 const app = express();
 const webSocketServer = require('websocket').server;
@@ -143,28 +144,20 @@ app.get('/card', (req, res) => {
     return;
   }
   const thumbFactor = thumb ? 5 : 1;
-
-  // Hack - upgrade imgur http to https for imgur
-  // TODO: Get the http protocol working
-  let remoteImageUrl = imageUrl.replace(/^http:\/\/i.imgur.com/, 'https://i.imgur.com');
-  const protocol = remoteImageUrl.startsWith('https') ? https : http;
-
-  try {
-    protocol.get(remoteImageUrl, function (response) {
-      const bufferStream = new PassThrough().pause();
-      const sizeStream = new ImageDimensionsStream();
-      let stream = response
-        .pipe(sizeStream)
-        .on('error', () => res.redirect('https://i.imgur.com/WwuvEPd.jpg'))
-        .pipe(bufferStream);
-
-      sizeStream.on('dimensions', ({width, height}) => {
+  const remoteImageUrl = unescape(imageUrl);
+  // const protocol = remoteImageUrl.startsWith('https') ? https : http;
+  var request = require('request').defaults({ encoding: null });
+  request.get(remoteImageUrl, function (err, response, body) {
+    const image = sharp(body);
+    image
+      .metadata()
+      .then(({ width, height, format }) => {
         // Calculate card size based on the sheet info and image dims
         const cardWidth = ~~(width / sheetWidth);
         const cardHeight = ~~(height / sheetHeight);
         const left = (offset % sheetWidth) * cardWidth;
         const top = Math.floor(offset / sheetWidth) * cardHeight;
-        const resizeCropStream = sharp()
+        image
           .resize({
             width: ~~(width / thumbFactor),
             height: ~~(height / thumbFactor),
@@ -174,16 +167,22 @@ app.get('/card', (req, res) => {
             top: ~~(top / thumbFactor),
             width: ~~(cardWidth / thumbFactor),
             height: ~~(cardHeight / thumbFactor)
+          })
+          .toBuffer()
+          .then(data => {
+            res.type(format);
+            res.end(data);
+          })
+          .catch(err => {
+            console.log(err);
+            res.redirect('https://i.imgur.com/WwuvEPd.jpg');
           });
-        stream = stream.pipe(resizeCropStream)
-          .on('error', () => res.redirect('https://i.imgur.com/WwuvEPd.jpg'))
-          .pipe(res);
-        bufferStream.resume();
+      })
+      .catch(err => {
+        console.log(err);
+        res.redirect('https://i.imgur.com/WwuvEPd.jpg');
       });
-    });
-  } catch(e) {
-    res.redirect('https://i.imgur.com/WwuvEPd.jpg');
-  }
+  });
 });
 
 // Handle card information from game
