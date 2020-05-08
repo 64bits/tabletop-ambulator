@@ -18,7 +18,7 @@ const imageProcessor = (req, res) => {
     url: remoteImageUrl,
     method: 'HEAD'
   }, function(err, response, body) {
-    if (response.headers['content-length'] / (1024 * 1024) > IMAGE_MAX_MB) {
+    if (!response.headers['content-length'] || response.headers['content-length'] / (1024 * 1024) > IMAGE_MAX_MB) {
       res.redirect('https://i.imgur.com/kPXLU8G.jpg');
       return;
     }
