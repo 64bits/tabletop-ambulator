@@ -11,6 +11,11 @@ body {
   cursor: pointer;
 }
 
+.deck_image {
+  max-width: 25px;
+  max-height: 35px;
+}
+
 .highlight .carousel__inner-slide {
   box-shadow: 0 0 15px rgb(0, 0, 0);
   padding: 3px 0px 3px 3px;

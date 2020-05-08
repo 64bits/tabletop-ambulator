@@ -172,6 +172,36 @@ function App({ width }) {
         <Typography>
           Tap to highlight, tap again to play on table
         </Typography>
+        {gameDecks.length > 0 && (
+          <Box m={2}>
+            <Button
+              style={{ whiteSpace: 'nowrap' }}
+              aria-controls="simple-menu"
+              aria-haspopup="true"
+              variant="contained"
+              onClick={handleClick}
+            >
+              Draw Card
+            </Button>
+            <Menu
+              id="simple-menu"
+              anchorEl={anchorEl}
+              keepMounted
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+            >
+              {gameDecks.map(deck => (
+                <MenuItem
+                  onClick={() => { drawCard(deck.guid); handleClose(); }}
+                  value={deck.guid}
+                >
+                  <Box pr={1}>From {deck.name}</Box>
+                  <img src={unescape(deck.back)} class="deck_image" />
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+        )}
       </Box>
     )}
     {cardData[playerColor] && (
@@ -182,6 +212,7 @@ function App({ width }) {
         }}
       >
         <CarouselProvider
+          hasMasterSpinner
           naturalSlideWidth={256}
           naturalSlideHeight={358}
           totalSlides={cardData[playerColor].length}
@@ -211,30 +242,6 @@ function App({ width }) {
               </Slide>
             ))}
           </Slider>
-          {gameDecks.length < 0 && (
-            <Box m={2}>
-              <Button style={{ whiteSpace: 'nowrap' }} aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick}>
-                Draw Card
-              </Button>
-              <Menu
-                id="simple-menu"
-                anchorEl={anchorEl}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-              >
-                {gameDecks.map(deck => (
-                  <MenuItem
-                    onClick={() => { drawCard(deck.guid); handleClose(); }}
-                    value={deck.guid}
-                  >
-                    <Box pr={1}>From</Box>
-                    <img src={unescape(deck.back)} width={45} height={60} />
-                  </MenuItem>
-                ))}
-              </Menu>
-            </Box>
-          )}
           <div
             style={{
               textAlign: 'center'

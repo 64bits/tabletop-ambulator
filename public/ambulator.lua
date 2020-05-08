@@ -38,9 +38,10 @@ end
 function sendDecks ()
     local decks = {}
     for key, value in pairs(getAllObjects()) do
-        if value.name == 'DeckCustom' then
+        if value.name == 'DeckCustom' or value.name == 'Deck' then
             local deckInfo = value.getCustomObject()[1]
             table.insert(decks, {
+                name = value.getName(),
                 back = encodeURI(deckInfo.back),
                 unique = deckInfo.unique_back,
                 guid = value.guid
@@ -91,6 +92,12 @@ end
 function onObjectPickUp(picked_up_object, player_color)
     if gameCode ~= '' then
         sendToServer()
+    end
+end
+
+function onObjectLeaveContainer( container,  exit_object)
+    if gameCode ~= '' and exit_object.name == 'Card' then
+        Wait.time(sendToServer, 1.5)
     end
 end
 
