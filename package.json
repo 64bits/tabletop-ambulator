@@ -1,7 +1,7 @@
 {
   "name": "tabletop-ambulator",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "proxy": "http://localhost:8000",
   "dependencies": {
     "@material-ui/core": "^4.9.12",
@@ -24,7 +24,10 @@
     "sequelize": "^5.21.7",
     "sequelize-cli": "^5.5.1",
     "sharp": "^0.25.2",
-    "websocket": "^1.0.31"
+    "websocket": "^1.0.31",
+    "react-three-fiber": "^5.2.1",
+    "three": "^0.122.0",
+    "lodash ": "^4.17.20"
   },
   "scripts": {
     "start": "react-scripts start",
