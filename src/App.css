@@ -16,6 +16,18 @@ body {
   max-height: 35px;
 }
 
+.counter {
+  position: absolute;
+  z-index: 10;
+  color: white;
+  background: rebeccapurple;
+  padding: 5px;
+  border-radius: 20px;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  line-height: 30px;
+}
 .highlight .carousel__inner-slide {
   box-shadow: 0 0 15px rgb(0, 0, 0);
   padding: 3px 0px 3px 3px;

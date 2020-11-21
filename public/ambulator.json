@@ -1,5 +1,5 @@
 {
-  "Name": "Figurine_Sir_Loin",
+  "Name": "BlockSquare",
   "Transform": {
     "posX": -2.74114973E-06,
     "posY": 1.22603619,
@@ -7,9 +7,9 @@
     "rotX": 3.78862183E-06,
     "rotY": -5.684964E-05,
     "rotZ": 2.31097351E-06,
-    "scaleX": 1.0,
-    "scaleY": 1.0,
-    "scaleZ": 1.0
+    "scaleX": 2.5,
+    "scaleY": 0.1,
+    "scaleZ": 2.5
   },
   "Nickname": "Tabletop Ambulator",
   "Description": "",
@@ -17,7 +17,8 @@
   "ColorDiffuse": {
     "r": 1.0,
     "g": 1.0,
-    "b": 1.0
+    "b": 1.0,
+    "a": 0.0
   },
   "Locked": false,
   "Grid": true,
@@ -29,7 +30,7 @@
   "GridProjection": false,
   "HideWhenFaceDown": false,
   "Hands": false,
-  "XmlUI": "",
+  "XmlUI": "<Panel pivot=\"0.5 1\" rotation=\"0.6 0 0\" height=\"2%\" width=\"2%\">\n<VerticalLayout>    \n    <Text color=\"rgb(0.2,0.6,0.6)\">Tabletop ambulator</Text>\n    <Text id=\"ttacode\" color=\"#FFFFFF\" fontSize=\"35\">CODE</Text>\n    <HorizontalLayout>    \n    <Button onClick=\"add_mat\">MAT</Button>\n    <Button onClick=\"reload\">RELOAD</Button>\n    </HorizontalLayout>\n</VerticalLayout>\n</Panel>",
   "LuaScriptState": "",
   "GUID": "f31a19"
 }
