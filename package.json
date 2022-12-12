@@ -10,7 +10,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "cached-request": "^2.0.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "http": "^0.0.1-security",
     "http-delayed-response": "^0.0.4",
     "pg": "^8.0.3",
